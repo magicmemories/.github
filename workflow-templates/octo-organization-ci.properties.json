@@ -1,6 +1,6 @@
 {
-    "name": "MM Organization Workflow",
-    "description": "MM Organization CI workflow template.",
+    "name": "Octo Organization Workflow",
+    "description": "Octo Organization CI workflow template.",
     "iconName": "example-icon",
     "categories": [
         "Go"
