@@ -47,10 +47,9 @@ jobs:
         with:
           install: true
 
-      # Pass your docker.mm repo and Configure the NEXUS_CREDS in Github Repo Secrets
       - name: Docker Build
         run: | 
-          docker build -t docker.magicmemories.com/{{YOUR DOCKERMM REPO}}:${{ github.sha }} --build-arg NEXUS_CREDS=${{ secrets.NEXUS_CREDS}} --push .  
+          docker build -t docker.magicmemories.com/${{ github.repository }}:${{ github.sha }} --build-arg NEXUS_CREDS=${{ secrets.NEXUS_CREDS}} --push .  
   
   deploy_to_test_env:
     runs-on: ubuntu-latest
@@ -73,10 +72,10 @@ jobs:
           # The directory that contains sops encrypted secrets
           secrets-directory: test
 
-# TODO
       - name: helm deploy
         uses: koslib/helm-eks-action@master
         env:
+        # 
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
           command: helm upgrade --install -f helm/values.yaml -f helm/test/decrypted/secrets.test.yaml --namespace test githubactions --set image_tag=${{ github.sha }} ./helm
