@@ -1,7 +1,7 @@
 {
     "name": "MM EKS Workflow",
     "description": "MM Organization EKS Workflow template.",
-    "iconName": "example-icon",
+    "iconName": "magicmemories",
     "categories": [
         "Go"
     ],
