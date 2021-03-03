@@ -65,7 +65,7 @@ jobs:
   
   deploy_to_test_env:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    # if: github.ref == 'refs/heads/master'
     environment:
       name: environment_test
     steps:
