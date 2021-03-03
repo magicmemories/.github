@@ -22,7 +22,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2 
 
-      # RUN TESTS : using own test file for now
+      # RUN TESTS : using own test file for now 
       - name: Docker RUN test_suite
         run: |
           export DOCKER_BUILDKIT=1 && docker build . --target test_suite
@@ -65,7 +65,7 @@ jobs:
   
   deploy_to_test_env:
     runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/master'
+    # if: github.ref == 'refs/heads/main'
     environment:
       name: environment_test
     steps:
