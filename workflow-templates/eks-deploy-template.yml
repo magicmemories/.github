@@ -42,9 +42,9 @@ jobs:
           # Server address of Docker registry. If not set then will default to Docker Hub
           registry: http://docker.magicmemories.com
           # Username used to log against the Docker registry
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ secrets.NEXUS_USERNAME }}
           # Password or personal access token used to log against the Docker registry
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
           # Log out from the Docker registry at the end of a job
           logout: false
 
