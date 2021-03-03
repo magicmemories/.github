@@ -153,46 +153,46 @@ jobs:
             # Log out from the Docker registry at the end of a job
             logout: false
 
-          - name: Configure AWS Credentials
-            uses: aws-actions/configure-aws-credentials@v1
-            with:
-              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws-region: us-west-2
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-west-2
 
-          - name: Decrypt SOPS Secrets
-              # You may pin to the exact commit or the version.
-              # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
-            uses: rmb938/sops-decrypt-action@0.1.0
-            with:
-              # The directory that contains sops encrypted secrets
-              secrets-directory: helm/uat
-
-          - name: Docker Build
-            run: |
-                docker build --target app -t docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }} --build-arg NEXUS_CREDS=${{ secrets.NEXUS_CREDS}} --push .
-      
-          - name: EKS Helm Deploy
+        - name: Decrypt SOPS Secrets
             # You may pin to the exact commit or the version.
-            # uses: peymanmortazavi/eks-helm-deploy@83f4abceabc33da212caebf906cf82c05f1fb210
-            uses: peymanmortazavi/eks-helm-deploy@v2.1
-            with:
-              # AWS credentials used to login to eks.
-              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              # AWS credentials used to login to eks.
-              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              # AWS region to use (default: us-west-2)
-              aws-region: us-west-2
-              # EKS cluster name.
-              cluster-name: uat-01
-              # EKS cluster admin role arn.
-              cluster-role-arn: arn:aws:iam::482780835707:role/jenkins-access-to-eks
-              # Comma separates list of helm values files.
-              config-files: helm/values.yaml, helm/uat/decrypted/secrets.uat.yaml, helm/values.uat.yaml
-              # Kubernetes namespace to use.
-              namespace: uat
-              # Name of the helm deploy.
-              name: githubactions
-              # The path of the chart.
-              chart-path: helm/
-              values: image_tag=${{ github.sha }}
+            # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
+          uses: rmb938/sops-decrypt-action@0.1.0
+          with:
+            # The directory that contains sops encrypted secrets
+            secrets-directory: helm/uat
+
+        - name: Docker Build
+          run: |
+              docker build --target app -t docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }} --build-arg NEXUS_CREDS=${{ secrets.NEXUS_CREDS}} --push .
+    
+        - name: EKS Helm Deploy
+          # You may pin to the exact commit or the version.
+          # uses: peymanmortazavi/eks-helm-deploy@83f4abceabc33da212caebf906cf82c05f1fb210
+          uses: peymanmortazavi/eks-helm-deploy@v2.1
+          with:
+            # AWS credentials used to login to eks.
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            # AWS credentials used to login to eks.
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            # AWS region to use (default: us-west-2)
+            aws-region: us-west-2
+            # EKS cluster name.
+            cluster-name: uat-01
+            # EKS cluster admin role arn.
+            cluster-role-arn: arn:aws:iam::482780835707:role/jenkins-access-to-eks
+            # Comma separates list of helm values files.
+            config-files: helm/values.yaml, helm/uat/decrypted/secrets.uat.yaml, helm/values.uat.yaml
+            # Kubernetes namespace to use.
+            namespace: uat
+            # Name of the helm deploy.
+            name: githubactions
+            # The path of the chart.
+            chart-path: helm/
+            values: image_tag=${{ github.sha }}
