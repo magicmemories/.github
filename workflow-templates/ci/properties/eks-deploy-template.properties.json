@@ -1,6 +1,7 @@
 {
     "name": "MM EKS Workflow",
     "description": "MM Organization EKS Workflow template.",
+    "creator": "Magic Memories",
     "iconName": "magicmemories",
     "categories": null
 }
