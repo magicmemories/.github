@@ -2,14 +2,12 @@ name: Python package
 
 # TESTING
 # This workflow configuration runs the jobs on each push and pull requests against the main branch.
-on:  
+on: 
+  push:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
-  
+
 
  ####################################################### BUILD APPLICATION ##################################################################################
 
@@ -34,31 +32,49 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2     
-      - name: Docker Login
-        # You may pin to the exact commit or the version.
-        # uses: docker/login-action@f3364599c6aa293cdc2b8391b1b56d0c30e45c8a
-        uses: docker/login-action@v1.8.0
-        with:
-          # Server address of Docker registry. If not set then will default to Docker Hub
-          registry: http://docker.magicmemories.com
-          # Username used to log against the Docker registry
-          username: ${{ secrets.NEXUS_USERNAME }}
-          # Password or personal access token used to log against the Docker registry
-          password: ${{ secrets.NEXUS_PASSWORD }}
-          # Log out from the Docker registry at the end of a job
-          logout: false
+      # - name: Docker Login
+      #   # You may pin to the exact commit or the version.
+      #   # uses: docker/login-action@f3364599c6aa293cdc2b8391b1b56d0c30e45c8a
+      #   uses: docker/login-action@v1.8.0
+      #   with:
+      #     # Server address of Docker registry. If not set then will default to Docker Hub
+      #     registry: http://docker.magicmemories.com
+      #     # Username used to log against the Docker registry
+      #     username: ${{ secrets.NEXUS_USERNAME }}
+      #     # Password or personal access token used to log against the Docker registry
+      #     password: ${{ secrets.NEXUS_PASSWORD }}
+      #     # Log out from the Docker registry at the end of a job
+      #     logout: false
 
-      - name: Docker Setup Buildx
-        # You may pin to the exact commit or the version.
-        # uses: docker/setup-buildx-action@154c24e1f33dbb5865a021c99f1318cfebf27b32
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-        id: buildx
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
         with:
-          install: true
+          registry: https://docker.magicmemories.com
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
+      
+      - name: Login to ECR
+        uses: docker/login-action@v1 
+        with:
+          registry: 482780835707.dkr.ecr.us-west-2.amazonaws.com
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Docker Build
-        run: |
-            docker build --target app -t docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }} --build-arg NEXUS_CREDS=${{ secrets.NEXUS_CREDS}} --push .
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: ${{ github.sha }}
+
+
+      # - name: Docker Build
+      #   run: |
+      #       docker build --target app -t docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }} --build-arg NEXUS_CREDS=${{ secrets.NEXUS_CREDS}} --push .
       
 ########################################################## DEPLOY TO TEST ENVIRONMENT ##############################################################################
 
