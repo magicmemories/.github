@@ -94,7 +94,7 @@ jobs:
       - name: Decrypt SOPS Secrets
           # You may pin to the exact commit or the version.
           # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
-        uses: rmb938/sops-decrypt-action@0.1.0
+        uses: rmb938/sops-decrypt-action@0.1.1
         with:
           # The directory that contains sops encrypted secrets
           secrets-directory: helm/test
@@ -163,7 +163,7 @@ jobs:
         - name: Decrypt SOPS Secrets
             # You may pin to the exact commit or the version.
             # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
-          uses: rmb938/sops-decrypt-action@0.1.0
+          uses: rmb938/sops-decrypt-action@0.1.1
           with:
             # The directory that contains sops encrypted secrets
             secrets-directory: helm/uat
