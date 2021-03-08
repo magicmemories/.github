@@ -13,3 +13,8 @@ The eks-deploy-template.yml template does the following:
 #### The KNOWNS ####
 1) By default images will be pushed to docker.mm (Nexus) and 482780835707.dkr.ecr.us-west-2.amazonaws.com.
 2) All the secret values are stored either as Organizational Secrets or Repository Secrets.  eg: ${{ secrets.AWS_ACCESS_KEY_ID }}
+
+#### Get notifications about your project ####
+1) To get notification about the projects you are working on, navigate to slack.
+2) Click on GitHub under "App" in slack and type: `/github subscribe magicmemories/{repo_name_for_notification} 
+3) You will get notified of success/failures/pull requests to only those repositories you "subscribe" to.
