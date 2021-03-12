@@ -84,7 +84,7 @@ jobs:
       name: environment_test
     steps:
       - uses: actions/checkout@v2
-      - name: Configure AWS Credentials
+       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -108,7 +108,6 @@ jobs:
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
        
-
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
@@ -118,20 +117,20 @@ jobs:
           build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
           tags: |
             docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
-            482780835707.dkr.ecr.us-west-2.amazonaws.com/${{ github.event.repository.name }}:${{ github.sha }}
- 
+            482780835707.dkr.ecr.us-west-2.amazonaws.com/githubactions-alchemy-processing-chromakey:${{ github.sha }}
+
       - name: Decrypt SOPS Secrets
           # You may pin to the exact commit or the version.
           # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
-        uses: rmb938/sops-decrypt-action@0.1.1
+        uses: rmb938/sops-decrypt-action@0.1.0
         with:
           # The directory that contains sops encrypted secrets
           secrets-directory: helm/test
 
-      - name: EKS Helm Deploy
+      - name: MM EKS Helm Deploy
         # You may pin to the exact commit or the version.
         # uses: peymanmortazavi/eks-helm-deploy@83f4abceabc33da212caebf906cf82c05f1fb210
-        uses: peymanmortazavi/eks-helm-deploy@v2.1 
+        uses: magicmemories/eks-helm-deploy@0.0.5
         with:
           # AWS credentials used to login to eks.
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -144,13 +143,21 @@ jobs:
           # EKS cluster admin role arn.
           cluster-role-arn: arn:aws:iam::482780835707:role/jenkins-access-to-eks
           # Comma separates list of helm values files.
-          config-files: helm/values.yaml, helm/test/decrypted/secrets.test.yaml, helm/values.test.yaml
+          config-files: helm/values.yaml, helm/test/decrypted/secrets.test.yaml, helm/values.test.yaml  
           # Kubernetes namespace to use.
           namespace: test
           # Name of the helm deploy.
-          name: ${{ github.event.repository.name }}
+          name: githubactions
+          timeout: 3m0s
+          # helm repo username
+          repo-username: ${{ secrets.NEXUS_USERNAME }}
+          # helm repo password
+          repo-password: ${{ secrets.NEXUS_PASSWORD }}
+          # helm repo
+          repo: https://nexus.magicmemories.com/repository/helm-internal
           # The path of the chart.
-          chart-path: helm/
+          chart-path: magic/github_actions_pipeline
+          version: 0.0.5
           values: image_tag=${{ github.sha }}
 
       - name: Run codacy-coverage-reporter
@@ -170,59 +177,81 @@ jobs:
       name: environment_uat
     steps:
         - uses: actions/checkout@v2
-        - name: Docker Login
+       - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2    
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          registry: https://docker.magicmemories.com
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Login to AWS
+        uses: docker/login-action@v1 
+        with:
+          registry: 482780835707.dkr.ecr.us-west-2.amazonaws.com
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+       
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
+          tags: |
+            docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
+            482780835707.dkr.ecr.us-west-2.amazonaws.com/githubactions-alchemy-processing-chromakey:${{ github.sha }}
+
+      - name: Decrypt SOPS Secrets
           # You may pin to the exact commit or the version.
-          # uses: docker/login-action@f3364599c6aa293cdc2b8391b1b56d0c30e45c8a
-          uses: docker/login-action@v1.8.0
-          with:
-            # Server address of Docker registry. If not set then will default to Docker Hub
-            registry: http://docker.magicmemories.com
-            # Username used to log against the Docker registry
-            username: ${{ secrets.NEXUS_USERNAME }}
-            # Password or personal access token used to log against the Docker registry
-            password: ${{ secrets.NEXUS_PASSWORD }}
-            # Log out from the Docker registry at the end of a job
-            logout: false
+          # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
+        uses: rmb938/sops-decrypt-action@0.1.0
+        with:
+          # The directory that contains sops encrypted secrets
+          secrets-directory: helm/uat
 
-        - name: Configure AWS Credentials
-          uses: aws-actions/configure-aws-credentials@v1
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: us-west-2
-
-        - name: Decrypt SOPS Secrets
-            # You may pin to the exact commit or the version.
-            # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
-          uses: rmb938/sops-decrypt-action@0.1.1
-          with:
-            # The directory that contains sops encrypted secrets
-            secrets-directory: helm/uat
-
-        - name: EKS Helm Deploy
-          # You may pin to the exact commit or the version.
-          # uses: peymanmortazavi/eks-helm-deploy@83f4abceabc33da212caebf906cf82c05f1fb210
-          uses: peymanmortazavi/eks-helm-deploy@v2.1
-          with:
-            # AWS credentials used to login to eks.
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            # AWS credentials used to login to eks.
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            # AWS region to use (default: us-west-2)
-            aws-region: us-west-2
-            # EKS cluster name.
-            cluster-name: uat-01
-            # EKS cluster admin role arn.
-            cluster-role-arn: arn:aws:iam::482780835707:role/jenkins-access-to-eks
-            # Comma separates list of helm values files.
-            config-files: helm/values.yaml, helm/uat/decrypted/secrets.uat.yaml, helm/values.uat.yaml
-            # Kubernetes namespace to use.
-            namespace: uat
-            # Name of the helm deploy.
-            name: githubactions
-            # The path of the chart.
-            chart-path: helm/
-            values: image_tag=${{ github.sha }}
+      - name: MM EKS Helm Deploy
+        # You may pin to the exact commit or the version.
+        # uses: peymanmortazavi/eks-helm-deploy@83f4abceabc33da212caebf906cf82c05f1fb210
+        uses: magicmemories/eks-helm-deploy@0.0.5
+        with:
+          # AWS credentials used to login to eks.
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # AWS credentials used to login to eks.
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # AWS region to use (default: us-west-2)
+          aws-region: us-west-2
+          # EKS cluster name.
+          cluster-name: uat-01
+          # EKS cluster admin role arn.
+          cluster-role-arn: arn:aws:iam::482780835707:role/jenkins-access-to-eks
+          # Comma separates list of helm values files.
+          config-files: helm/values.yaml, helm/uat/decrypted/secrets.uat.yaml, helm/values.uat.yaml  
+          # Kubernetes namespace to use.
+          namespace: uat
+          # Name of the helm deploy.
+          name: githubactions
+          timeout: 3m0s
+          # helm repo username
+          repo-username: ${{ secrets.NEXUS_USERNAME }}
+          # helm repo password
+          repo-password: ${{ secrets.NEXUS_PASSWORD }}
+          # helm repo
+          repo: https://nexus.magicmemories.com/repository/helm-internal
+          # The path of the chart.
+          chart-path: magic/github_actions_pipeline
+          version: 0.0.5
+          values: image_tag=${{ github.sha }}
 
         - name: Run codacy-coverage-reporter
           uses: codacy/codacy-coverage-reporter-action@master
