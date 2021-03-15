@@ -157,7 +157,7 @@ jobs:
           repo: https://nexus.magicmemories.com/repository/helm-internal
           # The path of the chart.
           chart-path: magic/alchemy-base
-          version: enter_version_number
+          version: enter_alchemy-base_chart_version_number
           values: image_tag=${{ github.sha }}
 
       - name: Run codacy-coverage-reporter
@@ -250,7 +250,7 @@ jobs:
           repo: https://nexus.magicmemories.com/repository/helm-internal
           # The path of the chart.
           chart-path: magic/alchemy-base
-          version: enter_version_number
+          version: enter_alchemy-base_chart_version_number
           values: image_tag=${{ github.sha }}
 
       - name: Run codacy-coverage-reporter
