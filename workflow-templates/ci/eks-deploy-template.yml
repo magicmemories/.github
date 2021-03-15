@@ -117,7 +117,7 @@ jobs:
           build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
           tags: |
             docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
-            482780835707.dkr.ecr.us-west-2.amazonaws.com/githubactions-alchemy-processing-chromakey:${{ github.sha }}
+            482780835707.dkr.ecr.us-west-2.amazonaws.com/${{ github.event.repository.name }}:${{ github.sha }}
 
       - name: Decrypt SOPS Secrets
           # You may pin to the exact commit or the version.
@@ -156,7 +156,7 @@ jobs:
           # helm repo
           repo: https://nexus.magicmemories.com/repository/helm-internal
           # The path of the chart.
-          chart-path: magic/github_actions_pipeline
+          chart-path: magic/alchemy-base
           version: 0.0.5
           values: image_tag=${{ github.sha }}
 
@@ -210,7 +210,7 @@ jobs:
           build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
           tags: |
             docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
-            482780835707.dkr.ecr.us-west-2.amazonaws.com/githubactions-alchemy-processing-chromakey:${{ github.sha }}
+            482780835707.dkr.ecr.us-west-2.amazonaws.com/${{ github.event.repository.name }}:${{ github.sha }}
 
       - name: Decrypt SOPS Secrets
           # You may pin to the exact commit or the version.
@@ -249,7 +249,7 @@ jobs:
           # helm repo
           repo: https://nexus.magicmemories.com/repository/helm-internal
           # The path of the chart.
-          chart-path: magic/github_actions_pipeline
+          chart-path: magic/alchemy-base
           version: 0.0.5
           values: image_tag=${{ github.sha }}
 
