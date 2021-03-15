@@ -68,12 +68,6 @@ jobs:
             docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
             482780835707.dkr.ecr.us-west-2.amazonaws.com/${{ github.event.repository.name }}:${{ github.sha }}
 
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@master
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: cobertura.xml
-
 ########################################################## DEPLOY TO TEST ENVIRONMENT ##############################################################################
 
   
@@ -159,12 +153,6 @@ jobs:
           chart-path: magic/alchemy-base
           version: enter_alchemy-base_chart_version_number
           values: image_tag=${{ github.sha }}
-
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@master
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: cobertura.xml
 
 ########################################################## DEPLOY TO UAT ENVIRONMENT ##############################################################################
 
@@ -252,9 +240,3 @@ jobs:
           chart-path: magic/alchemy-base
           version: enter_alchemy-base_chart_version_number
           values: image_tag=${{ github.sha }}
-
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@master
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: cobertura.xml
