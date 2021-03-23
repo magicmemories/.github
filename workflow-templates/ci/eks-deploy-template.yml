@@ -20,6 +20,11 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2 
 
+      # Commitsar check : https://commitsar.tech/docs/usage/github#using-the-github-action
+      # Summary : https://www.conventionalcommits.org/en/v1.0.0/
+      - name: Commitsar check
+        uses: aevea/commitsar@v0.16.0 
+
       # RUN TESTS : using own test file for now 
       - name: Docker RUN test_suite
         run: |
