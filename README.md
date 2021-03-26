@@ -1,6 +1,6 @@
 ### What is this repository for? ###
 
-This repository is a eks-deploy workflow template for all projects.
+This repository is an eks-deploy workflow template for all projects.
 The eks-deploy-template.yml template does the following:
 
 #### Basic workflow: ####
