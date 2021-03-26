@@ -1,6 +1,6 @@
 ### What is this repository for? ###
 
-This repository is an eks-deploy workflow template for all projects.
+This repository is an eks-deploy workflow template for all projects. Workflow templates can be used to create new workflows in an organizations' public repositories; to use templates to create workflows in private repositories, the organization must be part of an enterprise or GitHub One plan which MagicMemories is not yet.
 The eks-deploy-template.yml template does the following:
 
 #### Basic workflow: ####
