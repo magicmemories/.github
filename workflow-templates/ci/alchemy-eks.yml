@@ -1,12 +1,12 @@
 name: Python package
 
 # TESTING
-# This workflow configuration runs the jobs on each push and pull requests against the main branch.
+# This workflow configuration runs the jobs on each push and pull requests against the master branch.
 on: 
   push:
   pull_request:
     branches:
-      - main
+      - master
 
 
  ####################################################### BUILD APPLICATION ##################################################################################
@@ -15,7 +15,7 @@ jobs:
   build_and_test:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
+    if: github.ref != 'refs/heads/master'
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2 
@@ -33,7 +33,7 @@ jobs:
   publish_image:
     runs-on: ubuntu-latest
     needs: build_and_test
-    if: github.ref != 'refs/heads/main'
+    if: github.ref != 'refs/heads/master'
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2 
@@ -78,7 +78,7 @@ jobs:
   
   deploy_to_test_env:
     runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
     environment:
       name: environment_test
     steps:
