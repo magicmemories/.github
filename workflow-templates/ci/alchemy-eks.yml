@@ -50,14 +50,14 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1 
         with:
-          registry: https://docker.magicmemories.com
+          registry: ${{ secrets.REGISTRY_NAME }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Login to AWS
         uses: docker/login-action@v1 
         with:
-          registry: 482780835707.dkr.ecr.us-west-2.amazonaws.com
+          registry: ${{ secrets.REGISTRY_NAME }}
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
        
@@ -70,8 +70,8 @@ jobs:
           push: true
           build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
           tags: |
-            docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
-            482780835707.dkr.ecr.us-west-2.amazonaws.com/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.NEXUS_REGISTRY }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.AWS_REGISTRY_NAME }}/${{ github.event.repository.name }}:${{ github.sha }}
 
 ########################################################## DEPLOY TO TEST ENVIRONMENT ##############################################################################
 
@@ -96,14 +96,14 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1 
         with:
-          registry: https://docker.magicmemories.com
+          registry: ${{ secrets.REGISTRY_NAME }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Login to AWS
         uses: docker/login-action@v1 
         with:
-          registry: 482780835707.dkr.ecr.us-west-2.amazonaws.com
+          registry: ${{ secrets.AWS_REGISTRY_NAME }}
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
        
@@ -115,8 +115,8 @@ jobs:
           push: true
           build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
           tags: |
-            docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
-            482780835707.dkr.ecr.us-west-2.amazonaws.com/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.NEXUS_REGISTRY }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.AWS_REGISTRY_NAME }}/${{ github.event.repository.name }}:${{ github.sha }}
 
       - name: Decrypt SOPS Secrets
           # You may pin to the exact commit or the version.
@@ -138,9 +138,9 @@ jobs:
           # AWS region to use (default: us-west-2)
           aws-region: us-west-2
           # EKS cluster name.
-          cluster-name: test-01
+          cluster-name: cluster-name
           # EKS cluster admin role arn.
-          cluster-role-arn: arn:aws:iam::482780835707:role/jenkins-access-to-eks
+          cluster-role-arn: cluster-role-arn
           # Comma separates list of helm values files.
           config-files: helm/values.yaml, helm/test/decrypted/secrets.test.yaml, helm/values.test.yaml  
           # Kubernetes namespace to use.
@@ -153,10 +153,10 @@ jobs:
           # helm repo password
           repo-password: ${{ secrets.NEXUS_PASSWORD }}
           # helm repo
-          repo: https://nexus.magicmemories.com/repository/helm-internal
+          repo: helm-repo-name
           # The path of the chart.
-          chart-path: magic/alchemy-base
-          version: enter_alchemy-base_chart_version_number
+          chart-path: base-chart-path
+          version: base_chart_version_number
           values: image_tag=${{ github.sha }}
 
 ########################################################## DEPLOY TO UAT ENVIRONMENT ##############################################################################
@@ -183,14 +183,14 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1 
         with:
-          registry: https://docker.magicmemories.com
+          registry: ${{ secrets.REGISTRY_NAME }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Login to AWS
         uses: docker/login-action@v1 
         with:
-          registry: 482780835707.dkr.ecr.us-west-2.amazonaws.com
+          registry: ${{ secrets.AWS_REGISTRY_NAME }}
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       
@@ -202,8 +202,8 @@ jobs:
           push: true
           build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
           tags: |
-            docker.magicmemories.com/${{ github.event.repository.name }}:${{ github.sha }}
-            482780835707.dkr.ecr.us-west-2.amazonaws.com/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.NEXUS_REGISTRY }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.AWS_REGISTRY_NAME }}/${{ github.event.repository.name }}:${{ github.sha }}
 
       - name: Decrypt SOPS Secrets
           # You may pin to the exact commit or the version.
@@ -225,9 +225,9 @@ jobs:
           # AWS region to use (default: us-west-2)
           aws-region: us-west-2
           # EKS cluster name.
-          cluster-name: uat-01
+          cluster-name: cluster-name
           # EKS cluster admin role arn.
-          cluster-role-arn: arn:aws:iam::482780835707:role/jenkins-access-to-eks
+          cluster-role-arn: cluster-role-arn
           # Comma separates list of helm values files.
           config-files: helm/values.yaml, helm/uat/decrypted/secrets.uat.yaml, helm/values.uat.yaml  
           # Kubernetes namespace to use.
@@ -240,8 +240,8 @@ jobs:
           # helm repo password
           repo-password: ${{ secrets.NEXUS_PASSWORD }}
           # helm repo
-          repo: https://nexus.magicmemories.com/repository/helm-internal
+          repo: helm-repo
           # The path of the chart.
-          chart-path: magic/alchemy-base
-          version: enter_alchemy-base_chart_version_number
+          chart-path: base-chart-path
+          version: base_chart_version_number
           values: image_tag=${{ github.sha }}
