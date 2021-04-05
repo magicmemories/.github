@@ -1,0 +1,247 @@
+name: Python package
+
+# TESTING
+# This workflow configuration runs the jobs on each push and pull requests against the master branch.
+on: 
+  push:
+  pull_request:
+    branches:
+      - master
+
+
+ ####################################################### BUILD APPLICATION ##################################################################################
+
+jobs:
+  build_and_test:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2 
+
+      # Commitsar check : https://commitsar.tech/docs/usage/github#using-the-github-action
+      # Summary : https://www.conventionalcommits.org/en/v1.0.0/
+      - name: Commitsar check
+        uses: aevea/commitsar@v0.16.0 
+
+      # RUN TESTS : using own test file for now 
+      - name: Docker RUN test_suite
+        run: |
+          export DOCKER_BUILDKIT=1 && docker build . --target test_suite
+          
+  publish_image:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: github.ref != 'refs/heads/master'
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2    
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          registry: ${{ secrets.REGISTRY_NAME }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Login to AWS
+        uses: docker/login-action@v1 
+        with:
+          registry: ${{ secrets.REGISTRY_NAME }}
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+       
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
+          tags: |
+            ${{ secrets.NEXUS_REGISTRY }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.AWS_REGISTRY_NAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+
+########################################################## DEPLOY TO TEST ENVIRONMENT ##############################################################################
+
+  
+  deploy_to_test_env:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    environment:
+      name: environment_test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2    
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          registry: ${{ secrets.REGISTRY_NAME }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Login to AWS
+        uses: docker/login-action@v1 
+        with:
+          registry: ${{ secrets.AWS_REGISTRY_NAME }}
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+       
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
+          tags: |
+            ${{ secrets.NEXUS_REGISTRY }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.AWS_REGISTRY_NAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+
+      - name: Decrypt SOPS Secrets
+          # You may pin to the exact commit or the version.
+          # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
+        uses: rmb938/sops-decrypt-action@0.1.0
+        with:
+          # The directory that contains sops encrypted secrets
+          secrets-directory: helm/test
+
+      - name: MM EKS Helm Deploy
+        # You may pin to the exact commit or the version.
+        # uses: peymanmortazavi/eks-helm-deploy@83f4abceabc33da212caebf906cf82c05f1fb210
+        uses: magicmemories/eks-helm-deploy@0.0.5
+        with:
+          # AWS credentials used to login to eks.
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # AWS credentials used to login to eks.
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # AWS region to use (default: us-west-2)
+          aws-region: us-west-2
+          # EKS cluster name.
+          cluster-name: cluster-name
+          # EKS cluster admin role arn.
+          cluster-role-arn: cluster-role-arn
+          # Comma separates list of helm values files.
+          config-files: helm/values.yaml, helm/test/decrypted/secrets.test.yaml, helm/values.test.yaml  
+          # Kubernetes namespace to use.
+          namespace: test
+          # Name of the helm deploy.
+          name: githubactions
+          timeout: 3m0s
+          # helm repo username
+          repo-username: ${{ secrets.NEXUS_USERNAME }}
+          # helm repo password
+          repo-password: ${{ secrets.NEXUS_PASSWORD }}
+          # helm repo
+          repo: helm-repo-name
+          # The path of the chart.
+          chart-path: base-chart-path
+          version: base_chart_version_number
+          values: image_tag=${{ github.sha }}
+
+########################################################## DEPLOY TO UAT ENVIRONMENT ##############################################################################
+
+
+  deploy_to_uat_env:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: deploy_to_test_env
+    environment: 
+      name: environment_uat
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2    
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          registry: ${{ secrets.REGISTRY_NAME }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Login to AWS
+        uses: docker/login-action@v1 
+        with:
+          registry: ${{ secrets.AWS_REGISTRY_NAME }}
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: NEXUS_CREDS=${{ secrets.NEXUS_CREDS}}
+          tags: |
+            ${{ secrets.NEXUS_REGISTRY }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ secrets.AWS_REGISTRY_NAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+
+      - name: Decrypt SOPS Secrets
+          # You may pin to the exact commit or the version.
+          # uses: rmb938/sops-decrypt-action@b566d1bdf324e157c70890efda8192fd59f18945
+        uses: rmb938/sops-decrypt-action@0.1.0
+        with:
+          # The directory that contains sops encrypted secrets
+          secrets-directory: helm/uat
+
+      - name: MM EKS Helm Deploy
+        # You may pin to the exact commit or the version.
+        # uses: peymanmortazavi/eks-helm-deploy@83f4abceabc33da212caebf906cf82c05f1fb210
+        uses: magicmemories/eks-helm-deploy@0.0.5
+        with:
+          # AWS credentials used to login to eks.
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # AWS credentials used to login to eks.
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # AWS region to use (default: us-west-2)
+          aws-region: us-west-2
+          # EKS cluster name.
+          cluster-name: cluster-name
+          # EKS cluster admin role arn.
+          cluster-role-arn: cluster-role-arn
+          # Comma separates list of helm values files.
+          config-files: helm/values.yaml, helm/uat/decrypted/secrets.uat.yaml, helm/values.uat.yaml  
+          # Kubernetes namespace to use.
+          namespace: uat
+          # Name of the helm deploy.
+          name: githubactions
+          timeout: 3m0s
+          # helm repo username
+          repo-username: ${{ secrets.NEXUS_USERNAME }}
+          # helm repo password
+          repo-password: ${{ secrets.NEXUS_PASSWORD }}
+          # helm repo
+          repo: helm-repo
+          # The path of the chart.
+          chart-path: base-chart-path
+          version: base_chart_version_number
+          values: image_tag=${{ github.sha }}
